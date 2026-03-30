@@ -5,6 +5,7 @@ A self-improving runbook knowledge base for on-call engineers. Query it during i
 ![Claude](https://img.shields.io/badge/Claude-Agent_Skills-6B4FBB?logo=anthropic&logoColor=white)
 ![Wiki](https://img.shields.io/badge/Pattern-Self--Improving_Wiki-blue)
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
+![CI](https://github.com/TanishkaMarrott/devops-runbook-wiki/actions/workflows/ci.yml/badge.svg)
 
 ---
 
@@ -70,7 +71,70 @@ wiki/
 
 ---
 
-## Using the Skills
+## Using the Orchestrator
+
+The orchestrator is the CLI that ties everything together. It manages the session lifecycle end-to-end: query → save transcript → reflect → propose → approve/reject → apply.
+
+```bash
+pip install rich
+
+# Start an incident query session
+python orchestrator.py query
+
+# Re-run reflect on a saved session
+python orchestrator.py reflect 20260501T143022Z-demo
+
+# List recent sessions
+python orchestrator.py sessions
+```
+
+### What a session looks like
+
+```
+╭──────────────────────────────────────────────╮
+│  DevOps Runbook Wiki                         │
+│  Answers from compiled wiki only.            │
+╰──────────────────────────────────────────────╯
+
+Session: 20260502T091423Z-a4f2b1
+
+Incident query: api-gateway is returning high latency, p99 > 800ms
+
+╭─ Wiki Answer — confidence high ──────────────╮
+│  ## High Latency                             │
+│  1. Check distributed traces ...             │
+│  2. Check database pool wait time ...        │
+│  Sources: wiki/incidents/high-latency.md     │
+│           wiki/services/api-gateway.md       │
+╰──────────────────────────────────────────────╯
+
+Follow-up question? [y/N]: N
+Transcript saved → 20260502T091423Z-a4f2b1-transcript.json
+
+Run reflect analysis on this session? [Y/n]: Y
+
+Loop C — Session went well.
+Wiki answered the query confidently. No changes proposed.
+```
+
+When a gap is detected:
+
+```
+╭─ Reflect Analysis ────────────────────────────╮
+│  Loop B — Wiki Gap Detected                  │
+│  No wiki page matched query: 'redis cache    │
+│  timeout under load'. New page needed.       │
+╰───────────────────────────────────────────────╯
+
+  ACTION    FILE                                DESCRIPTION
+  CREATE    wiki/incidents/redis-cache-...md   New incident page covering: redis cache timeout
+
+Approve and apply these changes? [y/N]: y
+  Created wiki/incidents/redis-cache-timeout-under-load.md
+Changes applied. learnings.md updated.
+```
+
+## Using the Skills (Claude Code)
 
 ### Query during an incident
 
@@ -129,9 +193,12 @@ devops-runbook-wiki/
 │   ├── runbook-wiki/          # query skill
 │   ├── runbook-wiki-reflect/  # improvement loop skill
 │   └── runbook-wiki-ingest/   # config compiler skill
+├── orchestrator.py            # CLI — manages session lifecycle end-to-end
+├── tests/
+│   └── test_orchestrator.py   # 14 tests covering wiki reading, reflect loop, session management
 ├── wiki/                      # compiled knowledge base
-├── sessions/                  # session transcripts (auto-saved)
-└── _git_snapshot/             # raw configs (host-managed, read-only)
+├── sessions/                  # session transcripts (auto-saved, gitignored)
+└── _git_snapshot/             # raw configs (host-managed, read-only, gitignored)
 ```
 
 ---
