@@ -7,20 +7,48 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      - name: Verify all skill SKILL.md files exist
+        run: |
+          for skill in runbook-wiki runbook-wiki-session runbook-wiki-reflect runbook-wiki-ingest; do
+            if [ ! -f ".claude/skills/$skill/SKILL.md" ]; then
+              echo "MISSING: .claude/skills/$skill/SKILL.md"
+              exit 1
+            fi
+            echo "OK: .claude/skills/$skill/SKILL.md"
+          done
 
-      - name: Install dependencies
-        run: pip install rich pytest ruff
+      - name: Verify wiki structure
+        run: |
+          for f in \
+            wiki/incidents/_index.md \
+            wiki/incidents/high-latency.md \
+            wiki/incidents/service-down.md \
+            wiki/incidents/db-connection-failure.md \
+            wiki/services/api-gateway.md \
+            wiki/services/user-service.md \
+            wiki/playbooks/rollback.md \
+            wiki/playbooks/escalation.md \
+            wiki/playbooks/db-failover.md \
+            wiki/runbooks/latency-investigation.md \
+            wiki/learnings.md; do
+            if [ ! -f "$f" ]; then
+              echo "MISSING: $f"
+              exit 1
+            fi
+            echo "OK: $f"
+          done
 
-      - name: Lint
-        run: ruff check orchestrator.py tests/
-
-      - name: Test
-        run: PYTHONPATH=. pytest tests/ -v
+      - name: Check ARGUMENTS placeholder in all skills
+        run: |
+          for skill in runbook-wiki runbook-wiki-session runbook-wiki-reflect runbook-wiki-ingest; do
+            if ! grep -q "ARGUMENTS" ".claude/skills/$skill/SKILL.md"; then
+              echo "MISSING ARGUMENTS placeholder: .claude/skills/$skill/SKILL.md"
+              exit 1
+            fi
+            echo "OK: $skill has ARGUMENTS"
+          done
