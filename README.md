@@ -7,6 +7,9 @@ and it learns from every session — gaps in coverage get proposed as wiki impro
 ![Wiki](https://img.shields.io/badge/Pattern-Self--Improving_Wiki-blue)
 ![CI](https://github.com/TanishkaMarrott/devops-runbook-wiki/actions/workflows/ci.yml/badge.svg)
 
+
+> *Portfolio extraction based on self-improving wiki patterns developed at KodeKloud, 2026. Commit timeline reflects original development.*
+
 ---
 
 ## The Problem
